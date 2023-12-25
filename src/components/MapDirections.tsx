@@ -13,7 +13,7 @@ const MapDirections: React.FC<MapDirectionsProps> = ({coordinates, apikey}) => {
       waypoints={coordinates.slice(1)}
       destination={coordinates[coordinates.length - 1]}
       apikey={apikey}
-      strokeWidth={20}
+      strokeWidth={10}
       strokeColor="red"
     />
   );

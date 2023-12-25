@@ -32,8 +32,7 @@ interface Coordinate {
 const MapScreen: React.FC = () => {
   const [coordinates, setCoordinates] = useState<Coordinate[]>([]);
   const [saverStatus, setSaverStatus] = useState<boolean>(false);
-  const {getBatteryOptimizationStatus, requestLocationPermission} =
-    NativeModules.BatteryStatus;
+  const {requestLocationPermission} = NativeModules.BatteryStatus;
 
   const positionLookup = async (watchId: number | null) => {
     watchId = Geolocation.watchPosition(
@@ -42,7 +41,7 @@ const MapScreen: React.FC = () => {
         setCoordinates(prevCo => [...prevCo, {longitude, latitude, heading}]);
       },
       error => console.log(error),
-      {enableHighAccuracy: true, distanceFilter: 20, interval: 20000},
+      {enableHighAccuracy: true, distanceFilter: 20, interval: 600000},
     );
   };
 

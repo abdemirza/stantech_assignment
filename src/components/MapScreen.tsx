@@ -6,6 +6,8 @@ import {
   Image,
   Text,
   NativeModules,
+  AppState,
+  DeviceEventEmitter,
 } from 'react-native';
 
 import MapView, {Marker} from 'react-native-maps';
@@ -44,15 +46,26 @@ const MapScreen: React.FC = () => {
     );
   };
 
+  // callback function to handle battery saver status change
+  const handleBatteryStatusChange = (isPowerSaveMode: boolean) => {
+    setSaverStatus(isPowerSaveMode);
+  };
+
   useEffect(() => {
     requestLocationPermission();
-    getBatteryOptimizationStatus().then(res => {
-      setSaverStatus(res);
-    });
+
+    // adding listener for broadcaster
+    DeviceEventEmitter.addListener(
+      'BatteryStatusChanged',
+      handleBatteryStatusChange,
+    );
 
     let watchId: number | null = null;
     positionLookup(watchId);
-    return () => Geolocation.clearWatch(watchId!);
+
+    return () => {
+      Geolocation.clearWatch(watchId!);
+    };
   }, []);
 
   return (
@@ -86,11 +99,17 @@ const MapScreen: React.FC = () => {
         </MapView>
       )}
       <View style={styles.statusContainer}>
-        <Text style={styles.statusText}>Saver Status:</Text>
+        <View>
+          <Text style={styles.statusHeading}>Saver Status:</Text>
+          <Text
+            style={[styles.statusText, {color: saverStatus ? 'green' : 'red'}]}>
+            {saverStatus ? 'ON' : 'OFF'}
+          </Text>
+        </View>
         <Image
           style={[
             styles.statusImage,
-            {tintColor: saverStatus ? 'green' : 'blue'},
+            {tintColor: saverStatus ? 'green' : 'red'},
           ]}
           source={batterySaverIcon}
         />
@@ -121,6 +140,10 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   statusText: {
+    fontWeight: 'bold',
+    color: 'black',
+  },
+  statusHeading: {
     color: 'black',
   },
   statusImage: {

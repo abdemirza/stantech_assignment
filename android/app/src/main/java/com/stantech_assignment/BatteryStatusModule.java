@@ -4,9 +4,12 @@ package com.stantech_assignment;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Build;
 import android.os.PowerManager;
 import androidx.appcompat.app.AppCompatActivity;
@@ -21,9 +24,16 @@ import com.facebook.react.modules.core.DeviceEventManagerModule;
 public class BatteryStatusModule extends ReactContextBaseJavaModule {
 
   final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+  private ReactApplicationContext reactContext;
 
   public BatteryStatusModule(ReactApplicationContext reactContext) {
     super(reactContext);
+    this.reactContext = reactContext;
+
+    // Registering the BroadcastReceiver to listen for changes in power save mode
+    IntentFilter filter = new IntentFilter();
+    filter.addAction(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED);
+    reactContext.registerReceiver(batteryReceiver, filter);
   }
 
   @Override
@@ -31,22 +41,23 @@ public class BatteryStatusModule extends ReactContextBaseJavaModule {
     return "BatteryStatus";
   }
 
-  @ReactMethod
-  public void getBatteryOptimizationStatus(Promise promise) {
-    Context context = getReactApplicationContext();
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
-      PowerManager powerManager = (PowerManager) context.getSystemService(
-        Context.POWER_SERVICE
-      );
-      boolean isPowerSaveMode = powerManager.isPowerSaveMode();
-      promise.resolve(isPowerSaveMode);
-    } else {
-      promise.reject(
-        "UNSUPPORTED_ANDROID_VERSION",
-        "This feature requires Android Lollipop MR1 or higher"
-      );
+  private final BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+        PowerManager powerManager = (PowerManager) context.getSystemService(
+          Context.POWER_SERVICE
+        );
+        boolean isPowerSaveMode = powerManager.isPowerSaveMode();
+        emitBatteryStatus(isPowerSaveMode);
+      }
     }
+  };
+
+  private void emitBatteryStatus(boolean isPowerSaveMode) {
+    reactContext
+      .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
+      .emit("BatteryStatusChanged", isPowerSaveMode);
   }
 
   private boolean checkLocationPermission() {

@@ -250,7 +250,10 @@ android {
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
-
+    implementation 'com.google.android.gms:play-services-location:21.0.1'    
+    implementation (project(path: ':react-native-geolocation-service')) { 
+        exclude group: 'com.google.android.gms', module: 'play-services-location' 
+    }
     //noinspection GradleDynamicVersion
     implementation "com.facebook.react:react-native:+"  // From node_modules
 
